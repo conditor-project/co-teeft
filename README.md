@@ -23,7 +23,7 @@ Usage: index [options]
 Options:
   --input <input>    required   input file
   --output <output>  required   output file
-  --conf <conf>      required   conf file (default: "conf.default.json")
+  --conf <conf>      optionnal   conf file (default: "conf.default.json")
   -h, --help         output usage information
 ```
 

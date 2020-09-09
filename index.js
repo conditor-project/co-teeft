@@ -23,7 +23,7 @@ const StreamArray = require("stream-json/streamers/StreamArray"),
 program
   .requiredOption("--input <input>", colors.yellow(colors.bold("required")) + "   input file")
   .requiredOption("--output <output>", colors.yellow(colors.bold("required")) + "   output file")
-  .option("--conf <conf>", colors.yellow(colors.bold("required")) + "   conf file", "conf.default.json")
+  .option("--conf <conf>", colors.gray(colors.bold("optionnal")) + "   conf file", "conf.default.json")
   .parse(process.argv);
 
 let globalConf;
