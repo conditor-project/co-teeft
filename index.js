@@ -23,15 +23,28 @@ const StreamArray = require("stream-json/streamers/StreamArray"),
 program
   .requiredOption("--input <input>", colors.yellow(colors.bold("required")) + "   input file")
   .requiredOption("--output <output>", colors.yellow(colors.bold("required")) + "   output file")
+  .option("--conf <conf>", colors.yellow(colors.bold("required")) + "   conf file", "conf.default.json")
   .parse(process.argv);
+
+let globalConf;
 
 try {
   if (!fs.statSync(program.input).isFile()) {
     console.log('invalid value of --input : "' + program.input + '" is not a file.');
     process.exit(0);
   }
-} catch {
-  console.log('invalid value of --input : "' + program.input + '" is an invalid path.');
+  if (!fs.statSync(program.conf).isFile()) {
+    console.log('invalid value of --conf : "' + program.conf + '" is not a file.');
+    process.exit(0);
+  } else globalConf = JSON.parse(fs.readFileSync(program.conf, "utf-8").toString());
+  if (typeof globalConf !== "object" || !globalConf.conf || !Array.isArray(globalConf.langages)) {
+    console.log(
+      program.conf + " do not contain required data (see https://github.com/conditor-project/co-teeft#readme)"
+    );
+    process.exit(0);
+  }
+} catch (err) {
+  console.log(err);
   process.exit(0);
 }
 
@@ -52,33 +65,42 @@ class MyWritable extends stream.Writable {
     this.first = true;
   }
   write(chunk) {
-    if (_.has(chunk.value, "abstract.fr")) {
-      let textFr = _.has(chunk.value, "title.fr") ? chunk.value.title.fr : "" + chunk.value.abstract.fr,
-        indexationFR = indexator.fr.index(textFr, { sort: true, truncate: true }),
-        keywordsFR = indexationFR.keywords,
-        enrichmentFR = {
-          selectors: [{ selector: "sourceUid", values: [chunk.value.sourceUid] }],
-          target: { from: "parent", selector: "", key: "enrichments.keywords.fr" },
-          value: keywordsFR
-        };
-      console.log(chunk.value.sourceUid + " : " + keywordsFR.map((item) => item.term).join(","));
-      outputIndexStream.write((this.first ? "" : ",\n") + JSON.stringify(indexationFR));
-      outputStream.write((this.first ? "" : ",\n") + JSON.stringify(enrichmentFR));
-      this.first = false;
-    }
-    if (_.has(chunk.value, "abstract.en")) {
-      let textEN = _.has(chunk.value, "title.en") ? chunk.value.title.en : "" + chunk.value.abstract.en,
-        indexationEN = indexator.en.index(textEN, { sort: true, truncate: true }),
-        keywordsEN = indexationEN.keywords,
-        enrichmentEN = {
-          selectors: [{ selector: "sourceUid", values: [chunk.value.sourceUid] }],
-          target: { from: "parent", selector: "", key: "enrichments.keywords.en" },
-          value: keywordsEN
-        };
-      console.log(chunk.value.sourceUid + " : " + keywordsEN.map((item) => item.term).join(","));
-      outputIndexStream.write((this.first ? "" : ",\n") + JSON.stringify(indexationEN));
-      outputStream.write((this.first ? "" : ",\n") + JSON.stringify(enrichmentEN));
-      this.first = false;
+    for (let key in globalConf.conf) {
+      let conf = globalConf.conf[key],
+        id = _.get(chunk.value, conf.id, undefined),
+        text = conf.data.map((item) => _.get(chunk.value, item, "")).join(".");
+      if (text.length > conf.data.length - 1) {
+        let indexation = indexator[key].index(text, { sort: true, truncate: true }),
+          enrichment = {
+            selectors: _.transform(
+              conf.enrichment.selectors,
+              function (accumulator, selector) {
+                let values = _.get(chunk.value, selector, undefined);
+                if (typeof values !== "undefined") accumulator.push({ selector: selector, values: [values] });
+              },
+              []
+            ),
+            target: conf.target,
+            value: indexation.keywords
+          };
+        if (indexation.keywords.length > 0 && enrichment.selectors.length > 0) {
+          console.log(id + " : " + indexation.keywords.map((item) => item.term).join(","));
+          outputIndexStream.write(
+            (this.first ? "" : ",\n") + JSON.stringify({ selectors: enrichment.selectors, indexation: indexation })
+          );
+          outputStream.write((this.first ? "" : ",\n") + JSON.stringify(enrichment));
+          this.first = false;
+        } else {
+          console.log(
+            [
+              id,
+              ":",
+              indexation.keywords.length <= 0 ? "No selectors found" : "",
+              enrichment.selectors.length <= 0 ? " No selectors found" : ""
+            ].join(" ")
+          );
+        }
+      } else console.log(id + " : No text found in given properties (" + conf.data.join(",") + ")");
     }
   }
 }

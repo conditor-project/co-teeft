@@ -1,0 +1,42 @@
+{
+  "langages": [
+    "en",
+    "fr"
+  ],
+  "conf": {
+    "fr": {
+      "id": "sourceUid",
+      "data": [
+        "title.fr",
+        "abstract.fr"
+      ],
+      "enrichment": {
+        "selectors": [
+          "sourceUid"
+        ],
+        "target": {
+          "from": "parent",
+          "selector": "",
+          "key": "enrichments.keywords.fr"
+        }
+      }
+    },
+    "en": {
+      "id": "sourceUid",
+      "data": [
+        "title.en",
+        "abstract.en"
+      ],
+      "enrichment": {
+        "selectors": [
+          "sourceUid"
+        ],
+        "target": {
+          "from": "parent",
+          "selector": "",
+          "key": "enrichments.keywords.en"
+        }
+      }
+    }
+  }
+}
