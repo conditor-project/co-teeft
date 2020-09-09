@@ -83,7 +83,7 @@ Le fichier de configuration devra ressembler à :
 }
 ```
 
-Toutes ces informations permettront au programme de créer les données d'enrichissements comme :
+Toutes ces informations permettront de créer des données d'enrichissements comme cela :
 
 ```json
 {
