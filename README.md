@@ -14,7 +14,7 @@ Ce programme traite des fichiers .json contenant un tableau de docObjects sous l
 ]
 ```
 
-Pour lancer l'indexation, utiliser la commande suivante :
+Pour lancer l'indexation, utiliser les commandes suivantes :
 
 ```sh
 $ node index.js --help
