@@ -80,7 +80,7 @@ class MyWritable extends stream.Writable {
               },
               []
             ),
-            target: conf.target,
+            target: conf.enrichment.target,
             value: indexation.keywords
           };
         if (indexation.keywords.length > 0 && enrichment.selectors.length > 0) {
